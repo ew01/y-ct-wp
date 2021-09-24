@@ -61,12 +61,12 @@ class y_ct_wp_rest_api {
 	protected function handle_request(){
 		global $wpdb; //This is required to interface with the SQL database. We could call for it only in the actions that need to interface with the db, but since most will, we just call it here
 		global $wp;
+		$yct_oTables= new yct_tables();
 		$yct_version= $wp->query_vars['version'];
 
 		if($yct_version == 'v1'){
 			switch ($wp->query_vars['action']){
 				case 'test':
-					echo "Begin <br />";
 					//region Json Data
 					$yct_jsTestData='
 					{
@@ -121,14 +121,82 @@ class y_ct_wp_rest_api {
 					//Print response.
 					echo "<pre>$yct_aReturn</pre>";
 
-					echo "End";
 					break;
 				case 'order':
 					$yct_jsOrder= file_get_contents("php://input");
-
 					switch ($_SERVER['REQUEST_METHOD']){
 						case 'POST':
-							echo $yct_aReturn['message']= $yct_jsOrder;
+							/**
+							 * todo
+							 * In this case, we are going to catch the json, parse it and do the following
+							 * Create new Customer if does not exist
+							 * If we had a full customer profile module, we would also add/update addresses here
+							 * Check payment auth and see if it exists on any other order, if it does kick back with error
+							 * Make sure customer is not trying to reorder in a short time period
+							 * Make sure the items being ordered are in our database, and is not fake items.
+							 */
+							$yct_aOrder= json_decode($yct_jsOrder, true);
+
+							//region Find or Create the Customer
+							$yct_customerEmail= $yct_aOrder['customer']['email'];
+							$yct_aCustomer= $wpdb->get_row("SELECT * FROM $yct_oTables->yct_customers WHERE customer_email = '$yct_customerEmail'",ARRAY_A);
+							if($yct_aCustomer == ''){
+								$yct_newCustomer= 1;
+
+								$yct_aCustomer= array(
+									'customer_name_first'   => $yct_aOrder['billing_address']['name'],
+									'customer_email'        => $yct_aOrder['customer']['email']
+								);
+								//todo create customer
+								$yct_customerRecordResult= $wpdb->insert(
+									$yct_oTables->yct_customers,
+									$yct_aCustomer
+								);
+
+								if($yct_customerRecordResult === FALSE){
+									echo $wpdb->last_error;
+								}
+								else{
+									$yct_aReturn['customer_status']= 'created';
+								}
+							}
+							else{
+								$yct_aReturn['customer_status']= 'found';
+							}
+							//endregion
+
+							//region Compile Order Record
+							//Check for the Authorization ID
+							$yct_payment_auth= $yct_aOrder['payment']['authorization_id'];
+							$yct_aPaymentAuth= $wpdb->get_row("SELECT * FROM $yct_oTables->yct_orders WHERE order_payment_authorization = '$yct_payment_auth'",ARRAY_A);
+							if($yct_aPaymentAuth != ''){
+								//Kill order. Need message here.
+								echo 'Invalid Auth';
+								exit;
+							}
+
+							$yct_customerID= ($yct_newCustomer == 1) ? $wpdb->insert_id : $yct_aCustomer['id'];
+							//Create Order
+							$yct_aOrderRecord= array(
+								'order_customer_id'             => $yct_customerID,
+								'order_billing_address'         => json_encode($yct_aOrder['billing_address']),
+								'order_shipping_address'        => json_encode($yct_aOrder['order_shipping_address']),
+								'order_products'                => json_encode($yct_aOrder['products']),
+								'order_payment_method'          => $yct_aOrder['payment']['method'],
+								'order_payment_authorization'   => $yct_aOrder['payment']['authorization_id']
+							);
+							$yct_orderRecordResult= $wpdb->insert(
+								$yct_oTables->yct_orders,
+								$yct_aOrderRecord
+							);
+
+							if($yct_orderRecordResult === FALSE){
+								echo $wpdb->last_error;
+							}
+
+							//endregion
+
+							//echo $yct_aReturn['message']= $yct_jsOrder;
 							break;
 						default:
 							$yct_aReturn['status']= 'failed';
