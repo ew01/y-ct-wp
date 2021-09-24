@@ -15,6 +15,10 @@ N/A
 
 == Changelog ==
 = 0.0.2 =
+No major changes, just a quick commit to show some of the code I put in place when designing a new process.
+Currently working on the check to make sure the customer has not ordered the same cart again with in a short time, specifically working on the time stamp,
+and making sure everything stays in the same timezone for proper comparison.
+= 0.0.2 =
 * Added tables to handle the following data types: Customer, Addresses, Products, Orders
 * The posted json array is now processed into a Customer and Order table
 * Order process does the following as of this version

@@ -29,7 +29,7 @@ function yct_install_database($yct_dbVersion){
 
 	//region Create Customer Table
 	$yct_sql= "
-		CREATE TABLE $yct_oTables->yct_customers(
+		CREATE TABLE $yct_oTables->yct_customers (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			customer_name_first text,
 			customer_name_last text,
@@ -44,7 +44,7 @@ function yct_install_database($yct_dbVersion){
 
 	//region Create Addresses Table
 	$yct_sql= "
-		CREATE TABLE $yct_oTables->yct_addresses(
+		CREATE TABLE $yct_oTables->yct_addresses (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			address_customer_id mediumint(9) NOT NULL,
 			address_name text NOT NULL,
@@ -63,14 +63,15 @@ function yct_install_database($yct_dbVersion){
 
 	//region Create Order Table
 	$yct_sql= "
-		CREATE TABLE $yct_oTables->yct_orders(
+		CREATE TABLE $yct_oTables->yct_orders (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			order_customer_id mediumint(9) NOT NULL,
 			order_billing_address text NOT NULL,
 			order_shipping_address text NOT NULL,
 			order_payment_method text NOT NULL,
 			order_payment_authorization text NOT NULL,
-			order_products text NOT NULL,			
+			order_products text NOT NULL,
+			order_date_time timestamp NOT NULL,
 			unique key id (id),
 			primary key id (id)
 		)
@@ -81,7 +82,7 @@ function yct_install_database($yct_dbVersion){
 
 	//region Create Line Items Table
 	$yct_sql= "
-		CREATE TABLE $yct_oTables->yct_line_items(
+		CREATE TABLE $yct_oTables->yct_line_items (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			item_sku text NOT NULL,
 			item_price text,

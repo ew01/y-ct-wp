@@ -129,7 +129,7 @@ class y_ct_wp_rest_api {
 							/**
 							 * todo
 							 * In this case, we are going to catch the json, parse it and do the following
-							 * Create new Customer if does not exist
+							 * Create new Customer if does not exist: Email Address is primary identifier
 							 * If we had a full customer profile module, we would also add/update addresses here
 							 * Check payment auth and see if it exists on any other order, if it does kick back with error
 							 * Make sure customer is not trying to reorder in a short time period
@@ -166,24 +166,38 @@ class y_ct_wp_rest_api {
 							//endregion
 
 							//region Compile Order Record
-							//Check for the Authorization ID
+							//region Check for the Authorization ID and Order Time
 							$yct_payment_auth= $yct_aOrder['payment']['authorization_id'];
 							$yct_aPaymentAuth= $wpdb->get_row("SELECT * FROM $yct_oTables->yct_orders WHERE order_payment_authorization = '$yct_payment_auth'",ARRAY_A);
+
+							//Check Time Stamp
+							echo 'Date: '.$yct_aPaymentAuth['order_date_time'].'<br />';
+							echo 'Date: '.date('Y-m-j h:i:s');
+
+							echo '<h1>';
+							echo strtotime(date('Y-m-j h:i:s')) - strtotime($yct_aPaymentAuth['order_date_time']);
+							echo '</h1>';
+
 							if($yct_aPaymentAuth != ''){
 								//Kill order. Need message here.
 								echo 'Invalid Auth';
 								exit;
 							}
 
+							//2021-09-24 02:50:26
+							//date('Y-m-j h:i:s');
+							//endregion
+
+							//region Create Order
 							$yct_customerID= ($yct_newCustomer == 1) ? $wpdb->insert_id : $yct_aCustomer['id'];
-							//Create Order
 							$yct_aOrderRecord= array(
 								'order_customer_id'             => $yct_customerID,
 								'order_billing_address'         => json_encode($yct_aOrder['billing_address']),
 								'order_shipping_address'        => json_encode($yct_aOrder['order_shipping_address']),
 								'order_products'                => json_encode($yct_aOrder['products']),
 								'order_payment_method'          => $yct_aOrder['payment']['method'],
-								'order_payment_authorization'   => $yct_aOrder['payment']['authorization_id']
+								'order_payment_authorization'   => $yct_aOrder['payment']['authorization_id'],
+								'order_date_time'               => date('Y-m-j h:i:s')
 							);
 							$yct_orderRecordResult= $wpdb->insert(
 								$yct_oTables->yct_orders,
@@ -193,6 +207,7 @@ class y_ct_wp_rest_api {
 							if($yct_orderRecordResult === FALSE){
 								echo $wpdb->last_error;
 							}
+							//endregion
 
 							//endregion
 
