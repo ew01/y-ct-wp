@@ -72,6 +72,8 @@ function yct_install_database($yct_dbVersion){
 			order_payment_authorization text NOT NULL,
 			order_products text NOT NULL,
 			order_date_time timestamp NOT NULL,
+			order_view_id text,
+			order_status text,
 			unique key id (id),
 			primary key id (id)
 		)
@@ -104,10 +106,10 @@ register_activation_hook( __FILE__, 'yct_install_database' );
 //region Database Update Process
 //region Call the DB install function if there is a new version
 function yct_update_db_check() {
-	$yct_dbVersion = '0.0.1';//db.table.field
-	//if (get_option( 'yct_db_version' ) < $yct_dbVersion) {
+	$yct_dbVersion = '0.0.2';//db.table.field
+	if (get_option( 'yct_db_version' ) < $yct_dbVersion) {
 		yct_install_database($yct_dbVersion);
-	//}
+	}
 
 	yct_update_db_data_check();
 }
