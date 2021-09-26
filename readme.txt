@@ -14,6 +14,10 @@ Future updates will submit that json to the database as a new record, and eventu
 N/A
 
 == Changelog ==
+= 0.0.4 =
+* Added more handoffs of the wpdb to run _real_escape with the SQL connection object. Now preps shipping and billing address.
+* Check for allowed payment method.
+
 = 0.0.3 =
 * The test place order endpoint can now accept extra params to slightly modify the customer  (email), products, and payment auth to generate unique orders.
 ** https://dev.ellenburgweb.host/yct/yct_api/v1/place/ (customer=1&payment=1&product=1)

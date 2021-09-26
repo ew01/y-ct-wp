@@ -190,13 +190,22 @@ class y_ct_wp_rest_api {
 							$yct_jsProducts= json_encode($yct_aOrder['products']);
 							//endregion
 
-							//region Check for the Authorization ID and Order Time
+							//region Check for the Authorization ID, and Payment Method
 							$yct_payment_auth= $yct_aOrder['payment']['authorization_id'];
 							$yct_aPaymentAuth= $wpdb->get_row("SELECT * FROM $yct_oTables->yct_orders WHERE order_payment_authorization = '$yct_payment_auth'",ARRAY_A);
 							if($yct_aPaymentAuth != ''){
 								$yct_aReturn['status']= 'failed';
 								$yct_aReturn['message']= 'Invalid Auth';
 								$this->send_response($yct_aReturn);
+							}
+							switch ($yct_aOrder['payment']['method']){
+								case 'card':
+									break;
+								default:
+									$yct_aReturn['status']= 'failed';
+									$yct_aReturn['message']= 'Invalid Payment Method';
+									$this->send_response($yct_aReturn);
+									break;
 							}
 							//endregion
 
@@ -214,11 +223,19 @@ class y_ct_wp_rest_api {
 
 							//region Check that Products are Valid
 							foreach($yct_aOrder['products'] as $yct_aProduct){
+								//Check that product is real
 								$yct_productSku= $yct_aProduct['sku'];
 								$yct_aProductValid= $wpdb->get_row("SELECT * FROM $yct_oTables->yct_line_items WHERE item_sku = '$yct_productSku'",ARRAY_A);
 								if($yct_aProductValid == ''){
 									$yct_aReturn['status']= 'invalid';
 									$yct_aReturn['message']= 'You tried to order invalid products';
+									$this->send_response($yct_aReturn);
+								}
+
+								//Check that amount is an integer
+								if(!is_int($yct_aProduct['qty'])){
+									$yct_aReturn['status']= 'invalid';
+									$yct_aReturn['message']= 'You must specify a valid quantity';
 									$this->send_response($yct_aReturn);
 								}
 							}
@@ -227,10 +244,19 @@ class y_ct_wp_rest_api {
 							//region Create Order
 							$yct_customerID= ($yct_newCustomer == 1) ? $wpdb->insert_id : $yct_aCustomer['id'];
 
+							//region Sanitize strings
+							foreach($yct_aOrder['billing_address'] as $key => &$value){
+								$value= $wpdb->_real_escape($value);
+							}
+							foreach($yct_aOrder['shipping_address'] as $key => &$value){
+								$value= $wpdb->_real_escape($value);
+							}
+							//endregion
+
 							$yct_aOrderRecord= array(
 								'order_customer_id'             => $yct_customerID,
 								'order_billing_address'         => json_encode($yct_aOrder['billing_address']),
-								'order_shipping_address'        => json_encode($yct_aOrder['order_shipping_address']),
+								'order_shipping_address'        => json_encode($yct_aOrder['shipping_address']),
 								'order_products'                => $yct_jsProducts,
 								'order_payment_method'          => $yct_aOrder['payment']['method'],
 								'order_payment_authorization'   => $yct_aOrder['payment']['authorization_id'],
