@@ -10,6 +10,15 @@ This plugin has an API endpoint that posts a json array to it's second API endpo
 
 Future updates will submit that json to the database as a new record, and eventually make other checks as well to fulfill the requirements of the challenge.
 
+== Usage ==
+The URL (https://dev.ellenburgweb.host/yct/yct_api/v1/place/) Will place an order using the sample json in the pdf, adding one of the following will randomly generate a number to be placed into the
+respective data so that a new json array is posted: customer=1 | payment=1 | product=1
+Depending on the circumstances, some of those will fail, the product one will always fail as that is an example of comparing the product being ordered to what is actually allowed to be ordered.
+
+The URL (https://dev.ellenburgweb.host/yct/yct_api/v1/order/) is where you can post your own json arrays to.
+
+Each successful order placed generates a unique ID that can be used here: https://dev.ellenburgweb.host/yct/yct_api/v1/status/?id=YOUR UNIQUE ID
+
 == Suggestions for improvement ==
 General:
 
